@@ -1,0 +1,52 @@
+version: '2'
+
+services:
+    nats:
+        hostname: nats-server
+        image: nats-lupinemoon:1.0
+        build:
+            context: './nats'
+        container_name: lupinemoon-nats
+        expose:
+            - 4222
+            - 8222
+        ports:
+            - 4222:4222
+            - 8222:8222
+        restart: always
+
+    service-a:
+        build:
+            context: './service-a'
+        depends_on:
+            - nats
+        restart: always
+        expose:
+            - 6565
+        ports:
+            - 0.0.0.0:6565:6565
+        environment:
+            - NODE_ENV=staging
+            - API_PORT=8789
+            - API_HOST=0.0.0.0
+            - HEMERA_LOG_LEVEL=error
+            - JAEGER_URL=jaeger
+            - NATS_URL=nats://nats:4222
+            - NATS_USER=ruser
+            - NATS_PW=T0pS3cr3t
+
+    service-b:
+        build:
+            context: './service-b'
+        depends_on:
+            - nats
+        restart: always
+        environment:
+            - NODE_ENV=staging
+            - API_PORT=8789
+            - API_HOST=0.0.0.0
+            - HEMERA_LOG_LEVEL=error
+            - JAEGER_URL=jaeger
+            - NATS_URL=nats://nats:4222
+            - NATS_USER=ruser
+            - NATS_PW=T0pS3cr3t

@@ -1,0 +1,17 @@
+{
+  "name": "service-b",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "hemera-joi": "^6.0.2",
+    "nats": "^1.4.9",
+    "nats-hemera": "^7.0.2"
+  }
+}
