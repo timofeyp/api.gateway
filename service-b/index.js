@@ -1,4 +1,5 @@
 const Nats = require('nats');
+const https = require('https');
 const Hemera = require('nats-hemera');
 const HemeraJoi = require('hemera-joi');
 const dadata = require('dadata')(
@@ -22,6 +23,60 @@ const requestDadata = (kladrId) =>
       });
     }),
   );
+
+const makeRequest = (kladrId) =>
+  new Promise((resolve, reject) => {
+    const postData = JSON.stringify({
+      query: kladrId,
+    });
+
+    const options = {
+      hostname: 'suggestions.dadata.ru',
+      method: 'POST',
+      path: '/suggestions/api/4_1/rs/findById/address',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Token 7ded06bb51064631958927b26e115effbfaa9a41`,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      console.log(`statusCode: ${res.statusCode}`);
+
+      res.on('data', (d) => {
+        const json = d.toString();
+        const response = JSON.parse(json);
+        let suggestions;
+        if (response.suggestions.length) {
+          const [{ data }] = response.suggestions;
+          suggestions = data;
+        }
+        if (suggestions) {
+          resolve({
+            country_iso_code: suggestions.country_iso_code,
+            region: suggestions.region,
+            region_kladr_id: suggestions.region_kladr_id,
+            region_iso_code: suggestions.region_iso_code,
+            region_fias_id: suggestions.region_fias_id,
+          });
+        } else {
+          resolve({
+            country_iso_code: null,
+            region: null,
+            region_kladr_id: null,
+            region_iso_code: null,
+            region_fias_id: null,
+          });
+        }
+      });
+    });
+    req.on('error', (error) => {
+      reject(error);
+    });
+    req.write(postData);
+    req.end();
+  });
 
 const nats = Nats.connect({
   url: process.env.NATS_URL,
@@ -56,8 +111,12 @@ hemera.ready(() => {
     },
     async (req, res) => {
       const { kladrId } = req.payload;
-      const data = await requestDadata(kladrId);
-      res(null, data);
+      try {
+        const data = await makeRequest(kladrId);
+        res(null, data);
+      } catch (e) {
+        res(e);
+      }
     },
   );
 });
