@@ -21,16 +21,10 @@ services:
         depends_on:
             - nats
         restart: always
-        expose:
-            - 6565
         ports:
-            - 0.0.0.0:6565:6565
+            - 6565:6565
         environment:
-            - NODE_ENV=staging
-            - API_PORT=8789
-            - API_HOST=0.0.0.0
-            - HEMERA_LOG_LEVEL=error
-            - JAEGER_URL=jaeger
+            - API_PORT=6565
             - NATS_URL=nats://nats:4222
             - NATS_USER=ruser
             - NATS_PW=T0pS3cr3t
@@ -42,11 +36,8 @@ services:
             - nats
         restart: always
         environment:
-            - NODE_ENV=staging
-            - API_PORT=8789
-            - API_HOST=0.0.0.0
-            - HEMERA_LOG_LEVEL=error
-            - JAEGER_URL=jaeger
             - NATS_URL=nats://nats:4222
             - NATS_USER=ruser
             - NATS_PW=T0pS3cr3t
+            - DADATA_API_KEY=7ded06bb51064631958927b26e115effbfaa9a41
+            - DADATA_SECRET_KEY=80852833eacf0fd4be3e04c87e2baf760a4dadb7

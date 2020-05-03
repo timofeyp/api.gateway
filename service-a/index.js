@@ -1,52 +1,57 @@
 'use strict';
 
 const Hapi = require('@hapi/hapi');
+const joi = require('@hapi/joi');
+const OS = require('os');
 const HapiHemera = require('hapi-hemera');
 
 const init = async () => {
+  const server = Hapi.server({
+    port: process.env.API_PORT,
+    host: OS.hostname(),
+  });
 
-    const server = Hapi.server({
-        port: 6565,
-        host: 'localhost'
-    });
+  server.route({
+    method: 'GET',
+    path: '/',
+    handler: async (request, h) =>
+      request.hemera.act({
+        topic: 'auth',
+        cmd: 'authorize',
+        headers: request.headers,
+        payload: request.query,
+      }),
+    options: {
+      validate: {
+        query: joi.object({ kladrId: joi.string().min(3).max(40).required() }),
+      },
+    },
+  });
 
-    server.route({
-        method: 'GET',
-        path: '/',
-        handler: (request, h) => {
-            request.hemera.act({
-                topic: 'auth',
-                cmd: 'authorize',
-                headers: request.headers,
-                payload: request.payload
-            })
-        }
-    });
+  await server.register({
+    plugin: HapiHemera,
+    options: {
+      hemera: {
+        name: 'service-a',
+        logLevel: 'debug',
+        childLogger: true,
+        tag: 'hemera-api-gw',
+      },
+      nats: {
+        url: process.env.NATS_URL,
+        user: process.env.NATS_USER,
+        pass: process.env.NATS_PW,
+      },
+    },
+  });
 
-    await server.register({
-        plugin: HapiHemera,
-        options: {
-            hemera: {
-                name: 'service-a',
-                logLevel: 'debug',
-                childLogger: true,
-                tag: 'hemera-api-gw-1'
-            },
-            nats: {
-                url: 'nats://nats:4222',
-                user: 'ruser',
-                pass: 'T0pS3cr3t'
-            },
-        }
-    });
-
-    await server.start();
-    console.log('Server running on %s', server.info.uri);
+  await server.start();
+  console.log('Server running on %s', server.info.uri);
 };
 
 process.on('unhandledRejection', (err) => {
-    console.log(err);
-    process.exit(1);
+  console.log(err);
+  process.exit(1);
 });
 
 init();

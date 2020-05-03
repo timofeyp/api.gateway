@@ -1,2 +1,4 @@
 # Project exclude paths
 /service-b/node_modules/
+
+.idea
